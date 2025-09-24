@@ -32,6 +32,6 @@ jobs:
         id: api-auth
         run: |
           echo "Received token: $TOKEN"
-          export SHORT_LIVE_TOKEN=\"$(curl -k --request POST https://lvm-uat.secretsmgr.cyberark.cloud/api/authn-jwt/lvmtest/conjur/host%2Fdata%2FPRPShahbazJWT/authenticate --header "Content-Type: application/x-www-form-urlencoded" --header "Accept-Encoding: base64" --data-urlencode jwt="${{ env.TOKEN }}")\"
+          export SHORT_LIVE_TOKEN=\"$(curl -k --request POST https://lvm-uat.secretsmgr.cyberark.cloud/api/authn-jwt/ShahbazJWTAuth/conjur/host%2Fdata%2FPRPShahbazJWT/authenticate --header "Content-Type: application/x-www-form-urlencoded" --header "Accept-Encoding: base64" --data-urlencode jwt="${{ env.TOKEN }}")\"
           echo "Authentication request sent."
           curl -vvvk --request GET https://lvm-uat.secretsmgr.cyberark.cloud/api/secrets/conjur/variable/data%2Fvault%2FLVM_CONJ_PRP_INFOLOG%2FOperating%20System-AS400TN5250_New-ALVCP11Q-TRAIN01%2Fpassword -H "Authorization:Token token=$SHORT_LIVE_TOKEN"
