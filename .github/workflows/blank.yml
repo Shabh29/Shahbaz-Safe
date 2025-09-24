@@ -13,24 +13,25 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  token-job:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    name: Obtain and Use JWT
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Get JWT
+        id: auth-token
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          echo "TOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq .value)" >> $GITHUB_ENV
+          echo "JWT Token acquired."
+          echo $TOKEN | jq .value | base64
+
+      - name: Authenticate with API
+        id: api-auth
+        run: |
+          echo "Received token: $TOKEN"
+          export SHORT_LIVE_TOKEN=\"$(curl -k --request POST https://lvm-uat.secretsmgr.cyberark.cloud/api/authn-jwt/lvmtest/conjur/host%2Fdata%2FPRPShahbazJWT/authenticate --header "Content-Type: application/x-www-form-urlencoded" --header "Accept-Encoding: base64" --data-urlencode jwt="${{ env.TOKEN }}")\"
+          echo "Authentication request sent."
+          curl -vvvk --request GET https://lvm-uat.secretsmgr.cyberark.cloud/api/secrets/conjur/variable/data%2Fvault%2FLVM_CONJ_PRP_INFOLOG%2FOperating%20System-AS400TN5250_New-ALVCP11Q-TRAIN01%2Fpassword -H "Authorization:Token token=$SHORT_LIVE_TOKEN"
